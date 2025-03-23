@@ -1,0 +1,56 @@
+unclassified:
+  location:
+    url: http://0.0.0.0:8888/
+security:
+  scriptApproval:
+    approvedSignatures:
+    - staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods putAt java.lang.Object java.lang.String java.lang.Object
+jenkins:
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        # create a user called admin
+        - id: "minitaur"
+          password: "somethingelse"
+  authorizationStrategy: loggedInUsersCanDoAnything
+
+credentials:
+  system:
+    domainCredentials:
+    - credentials:
+      - usernamePassword:
+          id: "REPOSITORY_INFO"
+          username: "${ORG_REPO_SPACE}"
+          password: "${GIT_REPO}"
+          description: "Repository Organization and Name"
+          scope: GLOBAL
+      - usernamePassword:
+          id: "BITBUCKET_COMMON_CREDS"
+          username: "${GITHUB_USERNAME}"
+          password: "${GITHUB_TOKEN}"
+          description: "GitHub Repo Access Key"
+          scope: GLOBAL
+#Another example
+      - usernamePassword:
+          id: "DOCKERHUB_CREDENTIALS"
+          username: "dockerhub username"
+          password: "dockerhub password"
+          description: "Dockerhub Repo Access Key"
+          scope: GLOBAL
+
+#Test this for concurrent run of pipelines
+#Ensure at least 1 executor available
+#pipelines:
+#  numExecutors: 1
+
+#ADD YOUR JENKINS PIPELINES HERE (DEFINED AS DECLARATIVE PIPELINE AS CODE)
+#Job Definitions using job-dsl plugin
+jobs:
+  - script: folder('Infrastructure')
+  - script: folder('Infrastructure/NonProduction')
+  - file: /usr/local/iac-deployer-nprd.groovy
+  - file: /usr/local/iac-deployer-test-nprd.groovy
+  - file: /usr/local/iac-state-bootstrap-nprd.groovy
+  - file: /usr/local/iac-destroyer-nprd.groovy
+  - file: /usr/local/iac-destroyer-nprd-test.groovy

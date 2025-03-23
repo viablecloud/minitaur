@@ -1,0 +1,236 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: internal-kubectl
+  namespace: minitaur
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jenkins-casc-config
+  namespace: minitaur
+data:
+  casc.yaml: |
+    unclassified:
+      location:
+        url: http://0.0.0.0:8888/
+    security:
+      scriptApproval:
+        approvedSignatures:
+        - staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods putAt java.lang.Object java.lang.String java.lang.Object
+    jenkins:
+      securityRealm:
+        local:
+          allowsSignup: false
+          users:
+            - id: "minitaur"
+              password: "somethingelse"
+      authorizationStrategy: loggedInUsersCanDoAnything
+    credentials:
+      system:
+        domainCredentials:
+        - credentials:
+          - usernamePassword:
+              id: "REPOSITORY_INFO"
+              username: "${ORG_REPO_SPACE}"
+              password: "${GIT_REPO}"
+              description: "Repository Organization and Name"
+              scope: GLOBAL
+          - usernamePassword:
+              id: "BITBUCKET_COMMON_CREDS"
+              username: "${GITHUB_USERNAME}"
+              password: "${GITHUB_TOKEN}"
+              description: "GitHub Repo Access Key"
+              scope: GLOBAL
+          - usernamePassword:
+              id: "DOCKERHUB_CREDENTIALS"
+              username: "dockerhub username"
+              password: "dockerhub password"
+              description: "Dockerhub Repo Access Key"
+              scope: GLOBAL
+    jobs:
+      - script: folder('Infrastructure')
+      - script: folder('Infrastructure/NonProduction')
+      - file: /usr/local/iac-deployer-nprd.groovy
+      - file: /usr/local/iac-deployer-test-nprd.groovy
+      - file: /usr/local/iac-state-bootstrap-nprd.groovy
+      - file: /usr/local/iac-destroyer-nprd.groovy
+      - file: /usr/local/iac-destroyer-nprd-test.groovy
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins
+  namespace: minitaur
+spec:
+  selector:
+    matchLabels:
+      app: jenkins
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: jenkins
+    spec:
+      serviceAccountName: internal-kubectl
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+      containers:
+      - name: jenkins
+        image: quay.io/twelcome/minitaur:1.0.665
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: JAVA_OPTS
+          value: >-
+            -Djenkins.model.Jenkins.logStartupPerformance=true
+            -Djenkins.util.SystemProperties.allowAnyName=true
+            -Djenkins.install.runSetupWizard=false
+            -Dstapler.trace=true
+            -Dstapler.jelly.noCache=true
+            -Dstapler.stripTagLibPrefix=true
+            -Dorg.kohsuke.stapler.DISABLE_HTMLMARKUP=true
+            -Dorg.kohsuke.stapler.DISABLE_JELLY_PROCESSING=true
+            -Dhudson.console.ConsoleNote.DISABLED=true
+            -Dhudson.model.DirectoryBrowserSupport.CSP=
+            -Dhudson.console.PlainTextConsoleOutputStream.FORCE_RAW=true
+            -Dhudson.MarkupText.SKIP_HTML=true
+            -Dhudson.MarkupText.DISABLE_MARKUP=true
+            -Dhudson.MarkupText.NO_ANNOTATIONS=true
+            -Dhudson.console.ConsoleAnnotator.DISABLED=true
+            -Dhudson.console.HyperlinkNote.DISABLED=true
+            -Dhudson.console.HyperlinkNote.SKIP_HTML=true
+            -Djenkins.console.ConsoleAnnotator.DISABLED=true
+            -Dorg.kohsuke.stapler.framework.io.LargeText.DISABLE_HTML=true
+            -Dorg.kohsuke.stapler.framework.io.LargeText.FORCE_PLAIN=true
+            -Djenkins.console.ConsoleOutput.DISABLE_TRANSFORMS=true
+            -Djenkins.slaves.ConsoleOutputStream.PLAIN_TEXT_ONLY=true
+            -Dorg.kohsuke.stapler.framework.io.LargeText.DISABLE_PROGRESSIVE=true
+            -Djenkins.model.Jenkins.DISABLE_HTML_CONSOLE=true
+            -Djenkins.console.ConsoleNote.DISABLE_ALL=true
+            -Djenkins.security.ClassFilterImpl.SUPPRESS_WHITELIST=true
+            -Dhudson.plugins.ansicolor.AnsiColorConsoleLogFilter.DISABLED=true
+            -Dhudson.console.ConsoleAnnotationOutputStream.DISABLED=true
+            -Dorg.jenkinsci.plugins.workflow.log.FileLogStorage.DISABLE_ANNOTATIONS=true
+            -Djenkins.console.FileOutputStream.FORCE_RAW=true
+            -Dorg.kohsuke.stapler.DISABLE_HTTP_RESPONSE_STREAM_PROCESSING=true
+            -Djenkins.console.ConsoleOutput.RAW_OUTPUT=true
+            -Dorg.jenkinsci.plugins.workflow.steps.CoreStepDescriptor.RAW_OUTPUT=true
+            -Djenkins.console.ConsoleNote.RAW_OUTPUT=true
+            -Dcasc.jenkins.config=/var/jenkins_home/casc.yaml
+            -Djenkins.install.runSetupWizard=false
+        - name: JENKINS_OPTS
+          value: >-
+            --webroot=/var/cache/jenkins/war
+            --httpListenAddress=0.0.0.0
+            --httpPort=8080
+            --prefix=/
+            --logfile=/var/log/jenkins/jenkins.log
+        - name: ORG_REPO_SPACE
+          value: "viablecloud"
+        - name: GIT_REPO
+          value: "minitaur"
+        - name: USER
+          value: "gomonkey"
+        - name: PASSWORD
+          value: "h4n00m4n"
+        - name: ORGANISATION
+          value: "EIP"
+        - name: GITHUB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: github-credentials
+              key: username
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: github-credentials
+              key: token
+        ports:
+          - name: tcp-8080
+            containerPort: 8080
+        volumeMounts:
+          - name: jenkins-home
+            mountPath: /var/jenkins_home
+          - name: jenkins-cache
+            mountPath: /var/cache/jenkins
+          - name: jenkins-casc-config
+            mountPath: /var/jenkins_home/casc.yaml
+            subPath: casc.yaml
+          - name: jenkins-logs
+            mountPath: /var/log/jenkins
+      volumes:
+        - name: jenkins-home
+          emptyDir: {}
+        - name: jenkins-cache
+          emptyDir: {}
+        - name: jenkins-casc-config
+          configMap:
+            name: jenkins-casc-config
+        - name: jenkins-logs
+          emptyDir: {}
+      imagePullSecrets:
+        - name: engeneon-pull-secret
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: jenkins-service
+  namespace: minitaur
+spec:
+  type: NodePort
+  selector:
+    app: jenkins
+  ports:
+    - name: tcp-80
+      port: 8080
+      nodePort: 32765
+      protocol: TCP
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: modify-pods-to-sa
+  namespace: minitaur
+subjects:
+  - kind: ServiceAccount
+    name: internal-kubectl
+roleRef:
+  kind: Role
+  name: modify-pods
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: modify-pods
+  namespace: minitaur
+rules:
+  - apiGroups: ["apps","extensions",""]
+    resources:
+      - deployments
+      - pods
+      - services
+      - rolebindings
+      - roles
+      - pvc
+      - pv
+    verbs:
+      - get
+      - watch
+      - list
+      - patch
+      - delete
+      - restart
+      - create
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: github-credentials
+  namespace: minitaur
+type: Opaque
+data:
+  username: "github_username_base64_encoded" 
+  token: "github_token_base64_encoded"

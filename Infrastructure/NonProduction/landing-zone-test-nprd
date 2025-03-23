@@ -1,0 +1,6 @@
+environment {
+    BITBUCKET_COMMON_CREDS = credentials('BITBUCKET_COMMON_CREDS')
+    REPO_USER = credentials('REPOSITORY_INFO').username
+    REPO_PASS = credentials('REPOSITORY_INFO').password
+    CURRENT_BRANCH = "main"
+} 
