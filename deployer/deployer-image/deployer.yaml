@@ -233,5 +233,5 @@ metadata:
   namespace: minitaur
 type: Opaque
 data:
-  username: "YXJjaG1hbmdsZXI=" 
-  token: "Z2hwX29PT2p5SHY4OVM4a21jN0ZzRmtCdXQ3ZXYzbFFEZDJuSGdWYg=="
+  username: "your gihub username base64 encoded" 
+  token: "your github token base64 encoded"
