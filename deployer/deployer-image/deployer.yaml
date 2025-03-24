@@ -79,7 +79,8 @@ spec:
         runAsUser: 1000
       containers:
       - name: jenkins
-        image: quay.io/twelcome/minitaur:1.0.665
+        image: quay.io/twelcome/minitaur:1.2.6
+        image: viablecloud/deployer-debug:1.2.6
         imagePullPolicy: IfNotPresent
         env:
         - name: JAVA_OPTS
@@ -232,5 +233,5 @@ metadata:
   namespace: minitaur
 type: Opaque
 data:
-  username: "github_username_base64_encoded" 
-  token: "github_token_base64_encoded"
+  username: "YXJjaG1hbmdsZXI=" 
+  token: "Z2hwX29PT2p5SHY4OVM4a21jN0ZzRmtCdXQ3ZXYzbFFEZDJuSGdWYg=="

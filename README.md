@@ -38,16 +38,80 @@ drwxr-xr-x  10 minitaur  staff   320 Feb  3 16:46 terraform-azurerm-vnet ...Azur
 
 * The default architecture deployed with minitaur consumes all these modules and makes these infrastructure components available to you.
 
-
 # How to Use this Codebase
 
+* For step-by-step deployment guide, refer to this wiki page: https://github.com/viablecloud/minitaur/wiki/Minitaur-Azure-Deployment-Guide
+* For anarchitecture overview, refer to this wiki page: 
+
 ## Assumptions and Pre-requisites
+
+* An unused Azure Cloud Tenant with at least one subscription available
+* An Azure cloud login user with Global Tenant Owner permissions
+* Rancher Desktop, Minikube or Docker Desktop installed on your deployment workstation
+* A github account
+
 ## Customise the basics
+
+* Configure the infrastructure code using a few parameters in a central configuration file (`lz000.conf` and `deployer.conf`).
+* Below are the minimum parameters you should configure:
+
+* lz000.conf
+
+```
+TENANT_ID=your-azure-tenant-id
+TENANT_ORGANISATION_NAME=vc
+TENANT_ORGANISATION_SHORT=vc
+MANAGEMENT_SUBSCRIPTION_ID=your-target-azure-subscription-id
+DEPLOYMENT_LOCATION_SHORT=ea
+PRIMARY_LOCATION=eastasia
+APP_OWNER_EMAIL=tgw@viablecloud.io
+AUTHORISED_DEPLOYERS="your-deployer-worksatation-public-address"
+AzureSubscription=your-target-azure-subscription-id
+```
+
+* deployer.yaml
+
+```
+.
+.
+.
+        - name: ORG_REPO_SPACE
+          value: "your github org namespace"
+        - name: GIT_REPO
+          value: "minitaur"
+.
+.
+.
+data:
+  username: "base64 encoded github username" 
+  token: "base64 encoded github token"
+```
+
+* Note: Commit these changes to your github repo, they'll be pulled by the minitaur ci/cd deployer
+
 ## Start up the deployer
+
+* To run on kubernetes (e.g Rancher Desktop): 
+
+```
+cd deployer/deployer-image 
+./deploy.sh
+kubectl get pods -n minitaur
+```
+
 ## Test the code base (Dry Run)
+
+* See wiki guide: https://github.com/viablecloud/minitaur/wiki/Minitaur-Azure-Deployment-Guide#7-login-to-jenkins-and-run-the-bootstrap-pipeline-create-remote-state-storage 
+
 ## Run the deployer pipeline
+
+* See wiki guide: https://github.com/viablecloud/minitaur/wiki/Minitaur-Azure-Deployment-Guide#7-login-to-jenkins-and-run-the-bootstrap-pipeline-create-remote-state-storage 
+
 ## Address any deploy issues  
+
+* Log any deployment issues with our support team here: https://github.com/viablecloud/minitaur/issues 
 
 # Next Steps
 
 * Reach out to ViableCloud.com for more advice on how to create a complete enterprise-grade landing zone implementation with multi-subscription, multi-tenant and multi-region support.
+* You can reach us at https://viablecloud.io/ or directly via email: matt at viablecloud dot io 
