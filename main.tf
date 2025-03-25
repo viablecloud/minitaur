@@ -578,19 +578,21 @@ resource "azurerm_role_assignment" "container_administration" {
 variable "vmagent_ssh_username" {
   type        = string
   description = "The username for the local account that will be created on the new VM."
-  default     = "adjudicator"
+  default     = "changemeplz"
 }
 
+#**WARNING** BEST TO USE A DIFFERENT AUTH MECHANISM THAN USERNAME AND PASSWORD
 variable "vmagent_local_username" {
   type        = string
   description = "The username for the local account that will be created on the new VM."
-  default     = "adjudicator"
+  default     = "changemeplz"
 }
 
+#**WARNING** BEST TO USE A DIFFERENT AUTH MECHANISM THAN USERNAME AND PASSWORD
 variable "vmagent_local_password" {
   type        = string
-  description = "The username for the local account that will be created on the new VM."
-  default     = "Cr4ck3rJ4ck##"
+  description = "The Password  for the local account that will be created on the new VM."
+  default     = "CHANGEMEPLZ"
 }
 
 //Managed disks to expand the storage capacity of the VM
