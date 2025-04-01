@@ -57,6 +57,7 @@ module "spoke_virtual_network" {
         # To use defaults, use "" without adding any values.
         ["web-insecure-0006", "110", "Inbound", "Allow", "Tcp", "80", "*", "0.0.0.0/0"],
         ["web-secure-0006", "100", "Inbound", "Allow", "Tcp", "443", "*", "0.0.0.0/0"],
+        ["ssh-insecure-0006", "120", "Inbound", "Allow", "Tcp", "2222", "*", "0.0.0.0/0"],
 
       ]
 
